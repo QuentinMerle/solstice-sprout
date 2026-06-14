@@ -333,7 +333,7 @@ body {
   color: var(--ink); margin-bottom: 0.5rem;
 }
 .modal-content p { font-family: var(--font-display); font-weight: 700; color: var(--ink-muted); }
-.modal-input-group { display: flex; gap: 0.5rem; margin-top: 1.75rem; align-items: stretch; }
+.modal-input-group { display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1.75rem; align-items: stretch; }
 .modal-input-group input {
   flex: 1; padding: 0.7rem 1.25rem; border-radius: 999px; border: var(--border);
   background: var(--cream); box-shadow: var(--shadow-sm); color: var(--ink);

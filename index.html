@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" id="dynamic-favicon" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Solstice Sprout</title>
+    <!-- Fonts loaded via CSS @import in style.css -->
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body class="theme-sun">
+    <!-- Naming Modal -->
+    <div id="naming-modal" class="modal-overlay hidden">
+      <div class="modal-content">
+        <h2>Welcome! 🌱</h2>
+        <p>Give your new little sprout a name:</p>
+        <div class="modal-input-group">
+          <input type="text" id="plant-name-input" placeholder="e.g. Robert..." autocomplete="off"/>
+          <button id="plant-name-submit" class="btn-primary">Let's grow! 🌱</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Toolbar (Removed from floating, moved to chat controls) -->
+
+    <div class="grain-overlay"></div>
+    <div class="app-container">
+      <header class="header">
+        <div class="brand">
+          <h1 class="title" id="plant-title-display">Solstice Sprout</h1>
+          <p class="subtitle" id="status-text">Living locally</p>
+          <div class="weather-widget">
+            <span id="current-time">--:--</span>
+            <span class="weather-separator">•</span>
+            <span id="current-weather">🌡️ --°C</span>
+          </div>
+          <span id="llm-status" class="llm-badge" data-state="mock">🤖 Mock Mode</span>
+        </div>
+        <!-- Goal Progress Bar in Header -->
+        <div class="goal-bar" id="goal-bar">
+          <span class="goal-label" id="goal-label">🌱 Keep <strong id="goal-name">Sprout</strong> alive until June 21st</span>
+          <div class="goal-track">
+            <div class="goal-fill" id="goal-fill"></div>
+          </div>
+          <span class="goal-days" id="goal-days">Day 0 / 8</span>
+        </div>
+
+        <div class="gauges">
+          <div class="gauge-container">
+            <div class="gauge-label">
+              <span>Water</span>
+              <span id="water-val">50%</span>
+            </div>
+            <div class="gauge-track"><div class="gauge-fill" id="water-fill" style="width: 50%"></div></div>
+          </div>
+          <div class="gauge-container">
+            <div class="gauge-label">
+              <span>Happiness</span>
+              <span id="happy-val">80%</span>
+            </div>
+            <div class="gauge-track"><div class="gauge-fill" id="happy-fill" style="width: 80%"></div></div>
+          </div>
+          <div class="gauge-container">
+            <div class="gauge-label">
+              <span>Life</span>
+              <span id="life-val">100%</span>
+            </div>
+            <div class="gauge-track"><div class="gauge-fill" id="life-fill" style="width: 100%"></div></div>
+          </div>
+        </div>
+      </header>
+
+
+      <div class="main-content">
+        <!-- Left Panel: Plant -->
+        <main class="left-panel stage">
+          <div class="environment-effects" id="env-effects">
+             <div class="rain-particles"></div>
+          </div>
+
+        <div class="plant-container" id="plant-container">
+          <!-- Dynamically updated SVG -->
+          <svg viewBox="0 0 200 300" class="plant-svg" id="plant-svg" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <!-- Leaf gradient -->
+              <linearGradient id="leafGrad" x1="0" y1="0" x2="1" y2="1">
+                <stop id="leaf-stop-1" offset="0%" stop-color="#81C784"/>
+                <stop id="leaf-stop-2" offset="100%" stop-color="#4CAF50"/>
+              </linearGradient>
+              <!-- Stem gradient -->
+              <linearGradient id="stemGrad" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stop-color="#388E3C"/>
+                <stop offset="50%" stop-color="#66BB6A"/>
+                <stop offset="100%" stop-color="#388E3C"/>
+              </linearGradient>
+            </defs>
+
+            <!-- POT (Static) -->
+            <g id="pot-group">
+              <!-- Pot body -->
+              <path d="M58 212 Q54 268 100 270 Q146 268 142 212 Z"
+                    fill="#C8956C" stroke="#7B4D1E" stroke-width="3" stroke-linejoin="round"/>
+              <!-- Pot inner shadow -->
+              <path d="M64 215 Q61 255 100 257 Q139 255 136 215 Z"
+                    fill="#B5803B" opacity="0.35"/>
+              <!-- Pot rim -->
+              <rect x="44" y="194" width="112" height="24" rx="12"
+                    fill="#D4A56A" stroke="#7B4D1E" stroke-width="3"/>
+              <!-- Pot rim highlight -->
+              <rect x="50" y="197" width="100" height="8" rx="4"
+                    fill="#E8C080" opacity="0.5"/>
+              <!-- Soil surface -->
+              <ellipse cx="100" cy="200" rx="50" ry="9" fill="#3D2008" stroke="#2A1500" stroke-width="1.5"/>
+              <!-- Soil texture dots -->
+              <circle cx="85" cy="199" r="2.5" fill="#5C3212" opacity="0.6"/>
+              <circle cx="100" cy="201" r="2" fill="#5C3212" opacity="0.5"/>
+              <circle cx="115" cy="199" r="3" fill="#5C3212" opacity="0.6"/>
+            </g>
+
+            <!-- PLANT GROUP (Animated from soil base) -->
+            <g id="plant-group" class="plant-group">
+
+              <!-- Main stem -->
+              <path id="stem"
+                    d="M100 196 C99 172 101 150 99 126 C97 106 100 88 100 68"
+                    fill="none" stroke="url(#stemGrad)" stroke-width="8"
+                    stroke-linecap="round"/>
+
+              <!-- Left Leaf -->
+              <g id="leaf-left-group">
+                <path id="leaf-left"
+                      d="M97 160 C73 156 50 134 65 114 C77 97 99 128 97 160 Z"
+                      fill="url(#leafGrad)" stroke="#2E7D32" stroke-width="2"/>
+                <!-- Vein -->
+                <path d="M96 157 C84 143 73 127 67 116"
+                      fill="none" stroke="#43A047" stroke-width="1.5" opacity="0.7"/>
+                <path d="M84 145 C78 140 74 135 72 130"
+                      fill="none" stroke="#43A047" stroke-width="1" opacity="0.5"/>
+              </g>
+
+              <!-- Right Leaf -->
+              <g id="leaf-right-group">
+                <path id="leaf-right"
+                      d="M103 124 C124 110 150 108 144 127 C137 148 105 148 103 124 Z"
+                      fill="url(#leafGrad)" stroke="#2E7D32" stroke-width="2"/>
+                <!-- Vein -->
+                <path d="M104 126 C118 120 136 114 142 125"
+                      fill="none" stroke="#43A047" stroke-width="1.5" opacity="0.7"/>
+                <path d="M122 120 C128 118 135 118 140 122"
+                      fill="none" stroke="#43A047" stroke-width="1" opacity="0.5"/>
+              </g>
+
+              <!-- Tip Bud -->
+              <path id="leaf-top"
+                    d="M100 68 C88 52 94 42 100 40 C106 42 112 52 100 68 Z"
+                    fill="#A5D6A7" stroke="#66BB6A" stroke-width="2"/>
+
+              <!-- ======= FLOWER (progressive petals) ======= -->
+              <!-- Shown from stage >= 0, petals appear based on happiness -->
+              <g id="flower-group" transform="translate(100, 56)">
+                <!-- Petal 1 — top -->
+                <ellipse id="petal-1" class="petal hidden" cx="0" cy="-18" rx="7" ry="13"
+                         fill="#FF8A65" stroke="#BF360C" stroke-width="2"
+                         transform="rotate(0)"/>
+                <!-- Petal 2 — upper-right -->
+                <g transform="rotate(72)">
+                  <ellipse id="petal-2" class="petal hidden" cx="0" cy="-18" rx="7" ry="13"
+                           fill="#FF8A65" stroke="#BF360C" stroke-width="2"/>
+                </g>
+                <!-- Petal 3 — lower-right -->
+                <g transform="rotate(144)">
+                  <ellipse id="petal-3" class="petal hidden" cx="0" cy="-18" rx="7" ry="13"
+                           fill="#FF8A65" stroke="#BF360C" stroke-width="2"/>
+                </g>
+                <!-- Petal 4 — lower-left -->
+                <g transform="rotate(216)">
+                  <ellipse id="petal-4" class="petal hidden" cx="0" cy="-18" rx="7" ry="13"
+                           fill="#FF8A65" stroke="#BF360C" stroke-width="2"/>
+                </g>
+                <!-- Petal 5 — upper-left -->
+                <g transform="rotate(288)">
+                  <ellipse id="petal-5" class="petal hidden" cx="0" cy="-18" rx="7" ry="13"
+                           fill="#FF8A65" stroke="#BF360C" stroke-width="2"/>
+                </g>
+                <!-- Flower centre -->
+                <circle id="flower-center" class="hidden" cx="0" cy="0" r="10"
+                        fill="#FDD835" stroke="#F57F17" stroke-width="2.5"/>
+                <circle class="hidden" id="flower-center-dot" cx="0" cy="0" r="4"
+                        fill="#FF6F00" opacity="0.7"/>
+              </g>
+
+            </g><!-- end #plant-group -->
+
+            <!-- WEEDS (outside animated group so pot is anchor) -->
+            <g id="weeds-group">
+              <path class="weed-1 hidden"
+                    d="M52 212 Q46 192 38 182 Q44 190 42 178"
+                    stroke="#8BC34A" stroke-width="3" fill="none" stroke-linecap="round"/>
+              <path class="weed-2 hidden"
+                    d="M148 212 Q154 190 162 180 Q156 188 158 176"
+                    stroke="#8BC34A" stroke-width="3" fill="none" stroke-linecap="round"/>
+              <path class="weed-3 hidden"
+                    d="M62 210 Q58 196 55 188"
+                    stroke="#558B2F" stroke-width="3" fill="none" stroke-linecap="round"/>
+            </g>
+          </svg>
+        </div>
+        
+          <div class="action-banner hidden" id="rain-action">
+            <p>⚠️ Heavy rain is drowning your plant!</p>
+            <button id="close-window-btn" class="btn-primary">Close Virtual Window</button>
+          </div>
+        </main>
+
+        <!-- Right Panel: Chat -->
+        <aside class="right-panel chat-section">
+          <div class="chat-history" id="chat-history">
+            <div class="chat-message system">
+              <span class="chat-avatar">🌱</span>
+              <div class="chat-bubble">Hello! I'm Solstice Sprout. Give me some water or just talk to me!</div>
+            </div>
+          </div>
+          
+          <div class="chat-controls">
+            <div class="action-grid">
+              <button id="fertilize-btn" class="action-btn"><span>🌱</span> Fertilize</button>
+              <button id="weed-btn" class="action-btn"><span>🐛</span> Weed</button>
+              <button id="heal-btn" class="action-btn"><span>✂️</span> Heal</button>
+              <button id="music-btn" class="action-btn"><span>🎵</span> Music</button>
+            </div>
+            
+            <div class="chat-input-area">
+              <input type="text" id="chat-input" placeholder="Talk to the sprout..." autocomplete="off"/>
+              <button id="sun-btn" class="btn-icon" aria-label="Dry Plant">☀️</button>
+              <button id="water-btn" class="btn-icon" aria-label="Water Plant">💧</button>
+              <button id="send-btn" class="btn-icon" aria-label="Send Message">↑</button>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+    
+    <canvas id="favicon-canvas" width="64" height="64" style="display:none;"></canvas>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
